@@ -4,7 +4,11 @@ An animated Lovelace card for Home Assistant and the
 [hass-byd-vehicle](https://github.com/jkaberg/hass-byd-vehicle) integration.
 One file, no dependencies, built for phones.
 
-| Parked | Doors / charging | Light theme |
+| Real car, parked | Doors and windows open | Charging |
+|---|---|---|
+| ![parked](docs/photo-parked.png) | ![open](docs/photo-open.png) | ![charging](docs/photo-charging.png) |
+
+| Drawing only | Doors / charging | Light theme |
 |---|---|---|
 | ![parked](docs/parked.png) | ![open](docs/open.png) | ![light](docs/light.png) |
 
@@ -42,7 +46,7 @@ Settings → Dashboards → ⋮ → Resources.
 ```yaml
 type: custom:byd-vehicle-card
 body_style: suv            # suv | sedan | hatchback
-car_color: "#a9b5c4"       # name (white, black, grey, silver, blue, red, green…) or hex
+car_color: boundless-cloud # name (white, black, grey, silver, blue, red, green, boundless-cloud…) or hex
 battery_capacity: 18.3     # kWh – enables energy and cost figures
 price_entity: sensor.electricity_price   # dynamic tariff, per kWh
 # price_fixed: 0.25        # …or a fixed price
@@ -82,20 +86,24 @@ fuel_price: 1.65
 
 ### Your real car, animated
 
-BYD's cloud holds a transparent side render of *your* car in your colour – the same
-picture the BYD app shows. The card can animate it.
-
-1. Enable debug logging for `pybyd` and reload the integration. Search the log for
-   `picMainUrl` and open that address – it is a 1050×420 PNG.
-2. Save it to `/config/www/my-byd-side.png`.
-3. Add to the card:
+The repository includes BYD's official renders of a **Seal U DM-i in Boundless Cloud**
+(`images/seal-u-side.png`, `images/seal-u-front.png`). Copy them to `/config/www/` and:
 
 ```yaml
-side_photo: /local/my-byd-side.png
+side_photo: /local/seal-u-side.png
 side_model: seal_u
-interior_front: /local/my-interior-front.jpg   # optional
-interior_rear: /local/my-interior-rear.jpg     # optional
+photos: [/local/seal-u-front.png]               # optional extra view, tap to switch
+interior_front: /local/my-interior-front.jpg   # optional, your own photo
+interior_rear: /local/my-interior-rear.jpg     # optional, your own photo
 ```
+
+**Your own car in your colour.** BYD's cloud holds the same kind of transparent render
+for every car – the picture the BYD app shows.
+
+1. Enable debug logging for `pybyd` and reload the integration. Search the log for
+   `picMainUrl` (side, 1050×420 PNG) and `picSetUrl` (front three-quarter view) and open
+   those addresses.
+2. Save them to `/config/www/` and point `side_photo` / `photos` at them.
 
 The picture shows the left side; the right side is its mirror image. Tap to switch
 sides – the card also switches by itself to the side where something opens.
@@ -104,7 +112,15 @@ sides – the card also switches by itself to the side where something opens.
 pixels. Only **Seal U** is built in so far. For another model pass your own object with
 the same shape as `SIDE_MODELS.seal_u` in the source – and please send a pull request.
 
-No BYD images are included in this repository.
+### About the BYD images
+
+The car renders in `images/` (and the car shown in the `docs/photo-*.png` screenshots) are
+the property of BYD Company Ltd. They are the pictures BYD's own cloud serves to the owner
+of the car, included here only to show how the card works. This project is not
+affiliated with, endorsed by or sponsored by BYD, and the MIT license of this repository
+does **not** cover these images. BYD and the model names are trademarks of BYD Company
+Ltd. If you are a rights holder and want them removed, please open an issue and they
+will be taken down.
 
 ## Notes
 
@@ -113,4 +129,4 @@ No BYD images are included in this repository.
 - Tested on a BYD Seal U DM-i. Other models should work wherever the integration
   provides the entities; missing ones are simply hidden.
 
-MIT License. Not affiliated with BYD.
+MIT License (code only – see *About the BYD images*). Not affiliated with BYD.
