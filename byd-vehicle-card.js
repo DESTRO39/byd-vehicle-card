@@ -7,7 +7,7 @@
  *
  * MIT License
  */
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 
 /* ------------------------------------------------------------------ i18n */
 const I18N = {
@@ -226,20 +226,29 @@ function sideScene(url, M, interior = {}) {
   const poly = (pts) => `polygon(${pts.map(([x, y]) => `${X(x)} ${Y(y)}`).join(",")})`;
   const flat = (pts) => { const top = Math.min(...pts.map((q) => q[1])); return poly(pts.map(([x]) => [x, top])); };
   const bg = `background-image:url('${url}')`;
-  const cabin = (k) => {
+  const cabin = (k, pts = M[k].poly, cls = "hole", sp = k) => {
     const im = interior[k];
-    if (!im || !im.url) return `<div class="hole" data-sp="${k}" style="clip-path:${poly(M[k].poly)}"></div>`;
+    if (!im || !im.url) return `<div class="${cls}" data-sp="${sp}" style="clip-path:${poly(pts)}"></div>`;
     const xs = M[k].poly.map((q) => q[0]), ys = M[k].poly.map((q) => q[1]);
     const x0 = Math.min(...xs), y0 = Math.min(...ys), bw = Math.max(...xs) - x0, bh = Math.max(...ys) - y0;
-    const local = M[k].poly.map(([x, y]) => `${((x - x0) / bw * 100).toFixed(2)}% ${((y - y0) / bh * 100).toFixed(2)}%`).join(",");
-    return `<div class="hole photo" data-sp="${k}" style="inset:auto;left:${X(x0)};top:${Y(y0)};width:${X(bw)};height:${Y(bh)};clip-path:polygon(${local})">
+    const local = pts.map(([x, y]) => `${((x - x0) / bw * 100).toFixed(2)}% ${((y - y0) / bh * 100).toFixed(2)}%`).join(",");
+    return `<div class="${cls} photo" data-sp="${sp}" style="inset:auto;left:${X(x0)};top:${Y(y0)};width:${X(bw)};height:${Y(bh)};clip-path:polygon(${local})">
       <div class="ly" style="background:url('${im.url}') ${im.position || "center"}/cover no-repeat;${im.flip ? "transform:scaleX(-1)" : ""}"></div></div>`;
+  };
+  // open window: glass slides down inside the window frame, cabin visible above it
+  const win = (k, w) => {
+    const ys = M[w].map((q) => q[1]), y0 = Math.min(...ys), dy = ((Math.max(...ys) - y0) * 0.85 / M.h * 100).toFixed(2) + "%";
+    const edge = `linear-gradient(180deg,transparent ${Y(y0)},rgba(255,255,255,.6) ${Y(y0)},rgba(255,255,255,.6) calc(${Y(y0)} + .6%),transparent calc(${Y(y0)} + .6%))`;
+    return `${cabin(k, M[w], "wincab", w)}
+      <div class="ly winclip" data-win="${w}" style="clip-path:${poly(M[w])}">
+        <div class="ly winglass" data-sp="${w}" style="${bg};clip-path:${poly(M[w])};--dy:${dy}"></div>
+        <div class="ly winedge" data-sp="${w}" style="background:${edge};--dy:${dy}"></div></div>`;
   };
   const door = (k, w) => `
     ${cabin(k)}
     <div class="part door" data-sp="${k}" style="transform-origin:${X(M[k].hinge)} 50%">
       <div class="ly" style="${bg};clip-path:${poly(M[k].poly)}"></div>
-      <div class="ly winopen" data-sp="${w}" style="--c:${flat(M[w])};--o:${poly(M[w])}"></div>
+      ${win(k, w)}
     </div>`;
   const lid = (k) => `
     <div class="hole" data-sp="${k}" style="clip-path:${poly(M[k].poly)}"></div>
@@ -309,8 +318,9 @@ ha-card{position:relative;overflow:hidden;border:none;border-radius:var(--ha-car
 .hole{position:absolute;inset:0;background:linear-gradient(180deg,#141922 0%,#39435a 30%,#4b566e 52%,#2a3140 74%,#0d1118 100%);opacity:0;transition:opacity .35s}
 .hole.open{opacity:1}
 .hole.photo{background:#0d1118}.hole.photo::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 14px 4px rgba(0,0,0,.75)}
-.winopen{background:linear-gradient(180deg,#93a7c2,#5f728d);clip-path:var(--c);transition:clip-path 1.3s cubic-bezier(.4,0,.2,1);opacity:.92}
-.winopen.open{clip-path:var(--o)}
+.wincab{position:absolute;inset:0;background:linear-gradient(180deg,#1c2436,#090c14);opacity:0;transition:opacity .5s}.wincab.open{opacity:1}
+.winglass,.winedge{transition:transform 1.3s cubic-bezier(.4,0,.2,1),opacity .3s}.winglass.open,.winedge.open{transform:translateY(var(--dy))}
+.winglass{filter:brightness(1.08)}.winedge{opacity:0}.winedge.open{opacity:1}
 .wheel{display:none}.scene.driving .wheel{display:block;animation:spin .55s linear infinite}
 .base{transition:filter .5s}.scene.anyopen .base{filter:brightness(.82)}
 .olines polygon{fill:none;stroke:var(--warn);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-linejoin:round;opacity:0;transition:opacity .4s}
@@ -1031,8 +1041,8 @@ class BydVehicleCard extends HTMLElement {
     const st = { door_f: m.parts["door_f" + side], door_r: m.parts["door_r" + side], win_f: m.parts["win_f" + side], win_r: m.parts["win_r" + side], hood: m.parts.hood, trunk: m.parts.trunk };
     sc.querySelectorAll("[data-sp]").forEach((el) => el.classList.toggle("open", !!st[el.dataset.sp]));
     sc.querySelectorAll(".part").forEach((el) => {
-      const w = el.querySelector(".winopen");
-      el.classList.toggle("vis", !!st[el.dataset.sp] || !!(w && st[w.dataset.sp]));
+      const w = el.querySelector("[data-win]");
+      el.classList.toggle("vis", !!st[el.dataset.sp] || !!(w && st[w.dataset.win]));
     });
     sc.classList.toggle("anyopen", Object.values(st).some(Boolean));
     for (const [k, v] of Object.entries({ plugged: m.plugged, charging: m.charging, driving: m.status === "driving", on: m.on })) sc.classList.toggle(k, !!v);
