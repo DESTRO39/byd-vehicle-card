@@ -7,7 +7,7 @@
  *
  * MIT License
  */
-const VERSION = "0.5.1";
+const VERSION = "0.5.2";
 
 /* ------------------------------------------------------------------ i18n */
 const I18N = {
@@ -82,7 +82,7 @@ const BODY_STYLES = {
 };
 const PAINTS = {
   white: "#e9edf2", black: "#1d2026", grey: "#8b929c", silver: "#c3c9d1", blue: "#2f5f9e",
-  red: "#a3222b", green: "#3d6b5c", "time-grey": "#6c737d", "arctic-blue": "#9fc3d6", "atlantis-grey": "#515a66",
+  red: "#a3222b", green: "#3d6b5c", "time-grey": "#6c737d", "boundless-cloud": "#a9b5c4", "arctic-blue": "#9fc3d6", "atlantis-grey": "#515a66",
 };
 
 function carSvg(style, opts) {
