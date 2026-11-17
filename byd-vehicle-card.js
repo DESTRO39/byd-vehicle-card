@@ -7,7 +7,7 @@
  *
  * MIT License
  */
-const VERSION = "0.5.2";
+const VERSION = "0.5.3";
 
 /* ------------------------------------------------------------------ i18n */
 const I18N = {
@@ -238,8 +238,13 @@ function sideScene(url, M, interior = {}) {
   // open window: glass slides down inside the window frame, cabin visible above it
   const win = (k, w) => {
     const ys = M[w].map((q) => q[1]), y0 = Math.min(...ys), dy = ((Math.max(...ys) - y0) * 0.85 / M.h * 100).toFixed(2) + "%";
-    const edge = `linear-gradient(180deg,transparent ${Y(y0)},rgba(255,255,255,.6) ${Y(y0)},rgba(255,255,255,.6) calc(${Y(y0)} + .6%),transparent calc(${Y(y0)} + .6%))`;
-    return `${cabin(k, M[w], "wincab", w)}
+    const edge = `linear-gradient(180deg,transparent ${Y(y0)},rgba(255,255,255,.35) ${Y(y0)},rgba(255,255,255,.35) calc(${Y(y0)} + .6%),transparent calc(${Y(y0)} + .6%))`;
+    // cabin seen through the opening: far-side window light band, dark interior, headrest silhouette
+    const xs = M[w].map((q) => q[0]), x0 = Math.min(...xs), x1 = Math.max(...xs), y1 = Math.max(...ys), hgt = y1 - y0;
+    const hx = X(x0 + (x1 - x0) * (k === "door_f" ? 0.78 : 0.3)), hy = Y(y0 + hgt * 0.62);
+    const cab = `radial-gradient(ellipse ${X(hgt * 0.32)} ${Y(hgt * 0.36)} at ${hx} ${hy},#262b33 0 86%,transparent 100%),`
+      + `linear-gradient(180deg,#141a26 ${Y(y0)},#7d8ca2 ${Y(y0 + hgt * 0.12)},#66768c ${Y(y0 + hgt * 0.5)},#1a202c ${Y(y0 + hgt * 0.6)},#0a0d15 ${Y(y1)})`;
+    return `<div class="wincab" data-sp="${w}" style="clip-path:${poly(M[w])};background:${cab}"></div>
       <div class="ly winclip" data-win="${w}" style="clip-path:${poly(M[w])}">
         <div class="ly winglass" data-sp="${w}" style="${bg};clip-path:${poly(M[w])};--dy:${dy}"></div>
         <div class="ly winedge" data-sp="${w}" style="background:${edge};--dy:${dy}"></div></div>`;
